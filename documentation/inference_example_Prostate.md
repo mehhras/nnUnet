@@ -1,6 +1,6 @@
 # Example: inference with pretrained nnU-Net models
 
-This is a step-by-step example on how to run inference with pretrained nnU-Net models on the Prostate dataset of the 
+This is a step-by-step example of how to run inference with pretrained nnU-Net models on the Prostate dataset of the 
 Medical Segemtnation Decathlon.
 
 1) Install nnU-Net by following the instructions [here](../readme.md#installation). Make sure to set all relevant paths, 
@@ -32,14 +32,14 @@ always contain the T2 image and 0001.nii.gz the ADC image. Whenever you are usin
     ```bash
     nnUNet_print_pretrained_model_info Task005_Prostate
     ```
-   to obtain information on which modality needs to get which number. The outpput for Prostate is the following:
+   to obtain information on which modality needs to get which number. The output for Prostate is the following:
     
         Prostate Segmentation. 
         Segmentation targets are peripheral and central zone, 
         input modalities are 0: T2, 1: ADC. 
         Also see Medical Segmentation Decathlon, http://medicaldecathlon.com/
 6) The script we ran in 3) automatically converted the test data for us and stored them in
-`$nnUNet_raw_data_base/nnUNet_raw_data/Task005_Prostate/imagesTs`. Note that you need to to this conversion youself when 
+`$nnUNet_raw_data_base/nnUNet_raw_data/Task005_Prostate/imagesTs`. Note that you need to do this conversion youself when 
 using other than Medcial Segmentation Decathlon datasets. No worries. Doing this is easy (often as simple as appending 
 a _0000 to the file name if only one input modality is required). Instructions can be found here [here](data_format_inference.md).
 7) You can now predict the Prostate test cases with the pretrained model. We exemplarily use the 3D full resoltion U-Net here:
@@ -48,7 +48,13 @@ a _0000 to the file name if only one input modality is required). Instructions c
     ``` 
     Note that `-t 5` specifies the task with id 5 (which corresponds to the Prostate dataset). You can also give the full 
     task name `Task005_Prostate`. `OUTPUT_DIRECTORY` is where the resulting segmentations are saved.
-8) If you want to use an ensemble for inference, you need to run the following commands:
+    
+    Predictions should be quite fast and you should be done within a couple of minutes. If you would like to speed it 
+    up (at the expense of a slightly lower segmentation quality) you can disable test time data augmentation by 
+    setting the `--disable_tta` flag (8x speedup). If this is still too slow for you, you can consider using only a 
+    single model instead of the ensemble by specifying `-f 0`. This will use only the model trained on fold 0 of the 
+    cross-validation for another 5x speedup.
+8) If you want to use an ensemble of different U-Net configurations for inference, you need to run the following commands:
 
     Prediction with 3d full resolution U-Net (this command is a little different than the one above). 
     ```bash
@@ -69,4 +75,4 @@ a _0000 to the file name if only one input modality is required). Instructions c
    (optional!) is a file that gives nnU-Net information on how to postprocess the ensemble. These files were also 
    downloaded as part of the pretrained model weights and are located at `RESULTS_FOLDER/nnUNet/ensembles/
    Task005_Prostate/ensemble_2d__nnUNetTrainerV2__nnUNetPlansv2.1--3d_fullres__nnUNetTrainerV2__nnUNetPlansv2.1/postprocessing.json`. 
-   We will make the postprocessing files more accssible in a future (soon!) release.
+   We will make the postprocessing files more accessible in a future (soon!) release.

@@ -61,9 +61,9 @@ class ExperimentPlanner3D_v21_11GB(ExperimentPlanner3D_v21):
                                                              self.unet_featuremap_min_edge_length,
                                                              self.unet_max_numpool)
         #     use_this_for_batch_size_computation_3D = 520000000 # 505789440
-        # typical ExperimentPlanner3D_v21 configurations use 7.5GB, but on a 2080ti we have 11. Allow for more space
+        # typical ExperimentPlanner3D_v21 configurations use ~8.6GB, but on a 2080ti we have 11. Allow for more space
         # to be used
-        ref = Generic_UNet.use_this_for_batch_size_computation_3D * 11 / 8
+        ref = Generic_UNet.use_this_for_batch_size_computation_3D * 11 / 8  # 8 instead of 8.5 because YOLO
         here = Generic_UNet.compute_approx_vram_consumption(new_shp, network_num_pool_per_axis,
                                                             self.unet_base_num_features,
                                                             self.unet_max_num_filters, num_modalities,
@@ -104,7 +104,7 @@ class ExperimentPlanner3D_v21_11GB(ExperimentPlanner3D_v21):
         max_batch_size = np.round(self.batch_size_covers_max_percent_of_dataset * dataset_num_voxels /
                                   np.prod(input_patch_size, dtype=np.int64)).astype(int)
         max_batch_size = max(max_batch_size, self.unet_min_batch_size)
-        batch_size = min(batch_size, max_batch_size)
+        batch_size = max(1, min(batch_size, max_batch_size))
 
         do_dummy_2D_data_aug = (max(input_patch_size) / input_patch_size[
             0]) > self.anisotropy_threshold

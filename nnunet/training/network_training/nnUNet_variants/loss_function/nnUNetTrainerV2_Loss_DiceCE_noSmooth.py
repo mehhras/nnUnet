@@ -12,28 +12,16 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import torch.nn
+
+from nnunet.training.network_training.nnUNetTrainerV2 import nnUNetTrainerV2
+from nnunet.training.loss_functions.dice_loss import SoftDiceLoss, DC_and_CE_loss
 
 
-class CrossentropyND(torch.nn.CrossEntropyLoss):
-    """
-    Network has to have NO NONLINEARITY!
-    """
-    def forward(self, inp, target):
-        target = target.long()
-        num_classes = inp.size()[1]
+class nnUNetTrainerV2_Loss_DiceCE_noSmooth(nnUNetTrainerV2):
+    def __init__(self, plans_file, fold, output_folder=None, dataset_directory=None, batch_dice=True, stage=None,
+                 unpack_data=True, deterministic=True, fp16=False):
+        super().__init__(plans_file, fold, output_folder, dataset_directory, batch_dice, stage, unpack_data,
+                         deterministic, fp16)
+        self.loss = DC_and_CE_loss({'batch_dice': self.batch_dice, 'smooth': 0, 'do_bg': False}, {})
 
-        i0 = 1
-        i1 = 2
 
-        while i1 < len(inp.shape): # this is ugly but torch only allows to transpose two axes at once
-            inp = inp.transpose(i0, i1)
-            i0 += 1
-            i1 += 1
-
-        inp = inp.contiguous()
-        inp = inp.view(-1, num_classes)
-
-        target = target.view(-1,)
-
-        return super(CrossentropyND, self).forward(inp, target)

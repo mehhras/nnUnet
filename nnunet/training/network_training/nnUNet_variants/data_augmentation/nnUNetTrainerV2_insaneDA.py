@@ -16,8 +16,9 @@
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p
 from nnunet.network_architecture.neural_network import SegmentationNetwork
+from nnunet.training.data_augmentation.data_augmentation_insaneDA import get_insaneDA_augmentation
 from nnunet.training.data_augmentation.default_data_augmentation import default_3D_augmentation_params, \
-    default_2D_augmentation_params, get_patch_size, get_insaneDA_augmentation
+    default_2D_augmentation_params, get_patch_size
 from nnunet.training.dataloading.dataset_loading import unpack_dataset
 from nnunet.training.loss_functions.deep_supervision import MultipleOutputLoss2
 from nnunet.training.network_training.nnUNetTrainerV2 import nnUNetTrainerV2
@@ -56,13 +57,11 @@ class nnUNetTrainerV2_insaneDA(nnUNetTrainerV2):
                                                              self.data_aug_params['rotation_z'],
                                                              self.data_aug_params['scale_range'])
             self.basic_generator_patch_size = np.array([self.patch_size[0]] + list(self.basic_generator_patch_size))
-            patch_size_for_spatialtransform = self.patch_size[1:]
         else:
             self.basic_generator_patch_size = get_patch_size(self.patch_size, self.data_aug_params['rotation_x'],
                                                              self.data_aug_params['rotation_y'],
                                                              self.data_aug_params['rotation_z'],
                                                              self.data_aug_params['scale_range'])
-            patch_size_for_spatialtransform = self.patch_size
 
         self.data_aug_params["scale_range"] = (0.65, 1.6)
 
@@ -75,7 +74,7 @@ class nnUNetTrainerV2_insaneDA(nnUNetTrainerV2):
 
         self.data_aug_params['gamma_range'] = (0.6, 2)
 
-        self.data_aug_params['patch_size_for_spatialtransform'] = patch_size_for_spatialtransform
+        self.data_aug_params['patch_size_for_spatialtransform'] = self.patch_size
 
     def initialize(self, training=True, force_load_plans=False):
         if not self.was_initialized:

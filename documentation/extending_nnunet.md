@@ -16,7 +16,7 @@ This section gives guidance on how to implement changes to loss function, traini
 some architecture parameters, data augmentation etc. All these parameters are part of the **nnU-Net trainer class**, 
 which we have already seen in the sections above. The default trainer class for 2D, 3D low resolution and 3D full 
 resolution U-Net is nnUNetTrainerV2, the default for the 3D full resolution U-Net from the cascade is 
-nnUNetTrainerV2CascadeFullRes. Trainer classes in nnU-Net inherit form each other, nnUNetTrainerV2CascadeFullRes for 
+nnUNetTrainerV2CascadeFullRes. Trainer classes in nnU-Net inherit from each other, nnUNetTrainerV2CascadeFullRes for 
 example has nnUNetTrainerV2 as parent class and only overrides cascade-specific code.
 
 Due to the inheritance of trainer classes, changes can be integrated into nnU-Net quite easily and with minimal effort. 
@@ -55,9 +55,9 @@ classes are ExperimentPlanner2D_v21 for the 2D U-Net and ExperimentPlanner3D_v21
 U-Net cascade. Just like nnUNetTrainers, the ExperimentPlanners inherit from each other, resulting in minimal programming 
 effort to incorporate changes. Just like with the trainers, simply give your custom ExperimentPlanners a unique name and 
 save them in some subfolder of nnunet.experiment_planning. You can then specify your class names when running 
-`nnUNet_plan_and_preprocess` and nnU-Net will find them automatically. When inheriting form ExperimentPlanners, you **MUST** 
+`nnUNet_plan_and_preprocess` and nnU-Net will find them automatically. When inheriting from ExperimentPlanners, you **MUST** 
 overwrite the class variables `self.data_identifier` and `self.plans_fname` (just like for example 
-[here](nnunet/experiment_planning/alternative_experiment_planning/normalization/experiment_planner_3DUNet_CT2.py)). 
+[here](../nnunet/experiment_planning/alternative_experiment_planning/normalization/experiment_planner_3DUNet_CT2.py)). 
 If you omit this step the planner will overwrite the plans file and the preprocessed data of the planner it inherits from.
 
 To train with your custom configuration, simply specify the correct plans identifier with `-p` when you call the 
@@ -82,7 +82,7 @@ nnUNetTrainer knows which preprocessor must be used during inference to match th
 
 Modifications to the preprocessing pipeline could be the addition of bias field correction to MRI images, a different CT
 preprocessing scheme or a different way of resampling segmentations and image data for anisotropic cases. 
-An example is provided [here](nnunet/preprocessing/preprocessing.py).
+An example is provided [here](../nnunet/preprocessing/preprocessing.py).
 
 When implementing a custom preprocessor, you should also create a custom ExperimentPlanner that uses it (via self.preprocessor_name). 
 This experiment planner must also use a matching data_identifier and plans_fname to ensure no other data is overwritten.
@@ -91,7 +91,7 @@ This experiment planner must also use a matching data_identifier and plans_fname
 Changing the network architecture in nnU-Net is easy, but not self-explanatory. Any new segmentation network you implement 
 needs to understand what nnU-Net requests from it (wrt how many downsampling operations are done, whether deep supervision 
 is used, what the convolutional kernel sizes are supposed to be). It needs to be able to dynamiccaly change its topology, 
-just like our implementation of the [Generic_UNet](nnunet/network_architecture/generic_UNet.py). Furthermore, it must be
+just like our implementation of the [Generic_UNet](../nnunet/network_architecture/generic_UNet.py). Furthermore, it must be
 able to generate a value that can be used to estimate memory consumption. What we have implemented for Generic_UNet effectively
 counts the number of voxels found in all feature maps that are present in a given configuration. Although this estimation 
 disregards the number of parameters we have found it to work quite well. Unless you implement an architecture with 
@@ -106,10 +106,14 @@ can fit in the GPU of choice (manually define the dowmsampling, patch size etc) 
 as **reference** in the ExperimentPlanner that uses this architecture. 
 
 To illustrate this process, we have implemented a U-Net with a residual encoder 
-(see FabiansUNet in [generic_modular_residual_UNet.py](nnunet/network_architecture/generic_modular_residual_UNet.py)). 
+(see FabiansUNet in [generic_modular_residual_UNet.py](../nnunet/network_architecture/generic_modular_residual_UNet.py)). 
 This UNet has a class variable called use_this_for_3D_configuration. This value was found with the code located in 
 find_3d_configuration (same python file). The corresponding ExperimentPlanner 
-[ExperimentPlanner3DFabiansResUNet_v21](nnunet/experiment_planning/alternative_experiment_planning/experiment_planner_residual_3DUNet_v21.py)
+[ExperimentPlanner3DFabiansResUNet_v21](../nnunet/experiment_planning/alternative_experiment_planning/experiment_planner_residual_3DUNet_v21.py)
 compares this value to values generated for the currently configured network topology (which are also computed by 
 FabiansUNet.compute_approx_vram_consumption) to ensure that the GPU memory target is met.
 
+## Tutorials
+We have created tutorials on how to [manually edit plans files](tutorials/edit_plans_files.md), 
+[change the target spacing](tutorials/custom_spacing.md) and 
+[changing the normalization scheme for preprocessing](tutorials/custom_preprocessing.md).

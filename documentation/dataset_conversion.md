@@ -6,7 +6,7 @@ format closely, but not entirely, follows the format used by the
 The entry point to nnU-Net is the nnUNet_raw_data_base folder (which the user needs to specify when installing nnU-Net!). 
 Each segmentation dataset is stored as a separate 'Task'. Tasks are associated with a task ID, a three digit integer 
 (this is different from the MSD!) and 
-a task name (which you can freely chosse): Task005_Prostate has 'Prostate' as task name and the task id is 5. Tasks are stored in the 
+a task name (which you can freely choose): Task005_Prostate has 'Prostate' as task name and the task id is 5. Tasks are stored in the 
 nnUNet_raw_data_base/nnUNet_raw_data folder like this:
 
     nnUNet_raw_data_base/nnUNet_raw_data/
@@ -25,7 +25,7 @@ Within each task folder, the following structure is expected:
     ├── (imagesTs)
     └── labelsTr
     
-**Please make your custom task ids start at 100 to ensure that there will be no conflicts with downloaded pretrained models!!!**
+**Please make your custom task ids start at 500 to ensure that there will be no conflicts with downloaded pretrained models!!! (IDs cannot exceed 999)**
 
 imagesTr contains the images belonging to the training cases. nnU-Net will run pipeline configuration, training with 
 cross-validation, as well as finding postprocesing and the best ensemble on this data. imagesTs (optional) contains the 
@@ -125,6 +125,11 @@ The dataset.json file used by nnU-Net is identical to the ones used by the MSD. 
 them as well and thereby exactly follow the same structure. [This](https://drive.google.com/drive/folders/1HqEgzS8BV2c7xYNrZdEAnrHk7osJJ--2)
 is where you can download the MSD data for reference. 
 
+**NEW:** There now is a utility with which you can generate the dataset.json automatically. You can find it 
+[here](../nnunet/dataset_conversion/utils.py) (look for the function `generate_dataset_json`). 
+See [Task120](../nnunet/dataset_conversion/Task120_Massachusetts_RoadSegm.py) for an example on how to use it. And read 
+its documentation!
+
 Here is the content of the dataset.json from the Prostate task:
 
     { 
@@ -167,3 +172,55 @@ nnUNet_convert_decathlon_task -i FOLDER_TO_TASK_AS_DOWNLOADED_FROM_MSD -p NUM_PR
 FOLDER_TO_TASK_AS_DOWNLOADED_FROM_MSD needs to point to the downloaded task folder (such as Task05_Prostate, note the 
 2-digit task id!). The converted Task will be saved under the same name in nnUNet_raw_data_base/nnUNet_raw_data 
 (but with a 3 digit identifier). You can overwrite the task id of the converted task by using the `-output_task_id` option.
+
+
+## How to use 2D data with nnU-Net
+nnU-Net was originally built for 3D images. It is also strongest when applied to 3D segmentation problems because a 
+large proportion of its design choices were built with 3D in mind. Also note that many 2D segmentation problems, 
+especially in the non-biomedical domain, may benefit from pretrained network architectures which nnU-Net does not
+support.
+Still, there is certainly a need for an out of the box segmentation solution for 2D segmentation problems. And 
+also on 2D segmentation tasks nnU-Net cam perform extremely well! We have, for example, won a 2D task in the cell 
+tracking challenge with nnU-Net (see our Nature Methods paper) and we have also successfully applied nnU-Net to 
+histopathological segmentation problems. 
+
+Working with 2D data in nnU-Net requires a small workaround in the creation of the dataset. 
+Essentially, all images must be converted to pseudo 3D images (so an image with shape (X, Y).
+When working with 2D images it is important to follow the correct axis ordering. When loading the images with SimpleITK, 
+the resulting numpy array shape should be (1, x, y). We recommend you save your images with SimpleITK so that the
+correct shape is guaranteed. If you prefer to save your images with nibabel, please save them as (y, x, 1) 
+(SimpleITK reverts the ordering of the axes when reading). 
+To check whether your 2D images have the correct shape you can run the following snippet:
+```
+import SimpleITK as sitk
+print(sitk.GetArrayFromImage(sitk.ReadImage(FILENAME)).shape)
+```
+
+The resulting image must be saved in nifti format. Hereby it is important to set the spacing of the 
+first axis (the one with shape 1) to a value larger than the others. If you are working with niftis anyways, then 
+doing this should be easy for you.
+This example here is intended for demonstrating how nnU-Net can be used with 
+'regular' 2D images. We selected the massachusetts road segmentation dataset for this because it can be obtained 
+easily, it comes with a good amount of training cases but is still not too large to be difficult to handle.
+    
+See [here](../nnunet/dataset_conversion/Task120_Massachusetts_RoadSegm.py) for an example. 
+This script contains a lot of comments and useful information. Also have a look 
+[here](../nnunet/dataset_conversion/Task089_Fluo-N2DH-SIM.py).
+
+
+## How to update an existing dataset
+When updating a dataset you not only need to change the data located in `nnUNet_raw_data_base/nnUNet_raw_data`. Make 
+sure to also delete the whole (!) corresponding dataset in `nnUNet_raw_data_base/nnUNet_cropped_data`. nnU-Net will not 
+repeat the cropping (and thus will not update your dataset) if the old files are still in nnUNet_cropped_data!
+
+The best way of updating an existing dataset is (**choose one**):
+- delete all data and models belonging to the old version of the dataset (nnUNet_preprocessed, corresponding results 
+  in RESULTS_FOLDER/nnUNet, nnUNet_cropped_data, nnUNet_raw_data), then update
+- (recommended) create the updated dataset from scratch using a new task ID **and** name
+
+
+## How to convert other image formats to nifti
+Please have a look at the following tasks:
+- [Task120](../nnunet/dataset_conversion/Task120_Massachusetts_RoadSegm.py): 2D png images
+- [Task075](../nnunet/dataset_conversion/Task075_Fluo_C3DH_A549_ManAndSim.py) and [Task076](../nnunet/dataset_conversion/Task076_Fluo_N3DH_SIM.py): 3D tiff
+- [Task089](../nnunet/dataset_conversion/Task089_Fluo-N2DH-SIM.py) 2D tiff
